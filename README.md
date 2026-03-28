@@ -1,103 +1,118 @@
-# Task Tracker
+# Task Tracker CLI
 
-Build a CLI app to track your tasks and manage your to-do list.
+A small Go command-line tool to manage tasks. Tasks are stored in **`task_master.json`** in the **current working directory** (the file is created automatically).
 
-Task tracker is a project used to track and manage your tasks. In this task, you will build a simple command line interface (CLI) to track what you need to do, what you have done, and what you are currently working on. This project will help you practice your programming skills, including working with the filesystem, handling user inputs, and building a simple CLI application.
+## Index
+
+| Section / doc | Description |
+|-----------------|-------------|
+| [Requirements](#requirements) & [Setup](#setup) | Go version; setup for **this repo** vs **starting from scratch** |
+| [PROBLEM_DEFINITION.md](PROBLEM_DEFINITION.md) | Original assignment / problem statement and requirements |
+| [CHANGELOG.md](CHANGELOG.md) | Project changes and history |
 
 ## Requirements
 
-The application should run from the command line, accept user actions and inputs as arguments, and store the tasks in a JSON file. The user should be able to:
+- [Go](https://go.dev/dl/) **1.21 or newer** (this module uses `go 1.26.1`; use a matching or newer toolchain).
 
-* Add, Update, and Delete tasks
-* Mark a task as in progress or done
-* List all tasks
-* List all tasks that are done
-* List all tasks that are not done
-* List all tasks that are in progress
+## Setup
 
-Here are some constraints to guide the implementation:
+### Using this repository
 
-* You can use any programming language to build this project.
-* Use positional arguments in command line to accept user inputs.
-* Use a JSON file to store the tasks in the current directory.
-* The JSON file should be created if it does not exist.
-* Use the native file system module of your programming language to interact with the JSON file.
-* Do not use any external libraries or frameworks to build this project.
-* Ensure to handle errors and edge cases gracefully.
+Follow these steps to run or build **this** project as it exists today.
 
-### Example
+1. **Install Go** from the [official downloads](https://go.dev/dl/) and confirm it is on your `PATH`:
+   ```bash
+   go version
+   ```
+2. **Clone or unpack** the repo and `cd` to the **project root** (the folder that contains `go.mod`):
+   ```bash
+   cd /path/to/task_tracker_cli
+   ```
+3. **Dependencies** — versions are pinned in **`go.mod`** / **`go.sum`**. You do **not** run `cobra-cli` or `go get github.com/spf13/cobra` just to use this codebase.
+   - Optional: `go mod download` (e.g. for CI or offline builds). Otherwise **`go run`** / **`go build`** fetch modules on first use.
+4. **Run or build** from the project root:
+   ```bash
+   go run . --help
+   go run ./cmd/task-stdlib help
+   ```
+   ```bash
+   go build -o task-cobra .
+   go build -o task-stdlib ./cmd/task-stdlib
+   ```
+5. **Pick a working directory** for your data file — `task_master.json` is created in the **current working directory** when you invoke the binary:
+   ```bash
+   cd ~/my-tasks
+   /path/to/task-cobra list
+   ```
 
-The list of commands and their usage is given below:
+To bump Cobra later (optional): `go get github.com/spf13/cobra@latest` → `go mod tidy` → re-test.
 
-**bash**
+### Starting from scratch (new project)
+
+Use this path only if you are **creating a new CLI** (for learning or a different app), not when cloning this repo.
+
+1. **Install Go** (same as above).
+2. **Create a module** in a new empty directory:
+   ```bash
+   mkdir mycli && cd mycli
+   go mod init example.com/mycli
+   ```
+3. **Optional — Cobra scaffolding** — install the generator and lay out commands:
+   ```bash
+   go install github.com/spf13/cobra-cli@latest
+   cobra-cli init
+   cobra-cli add serve   # example; repeat for each subcommand
+   ```
+   Add Cobra to the module if the scaffold did not pull it:
+   ```bash
+   go get github.com/spf13/cobra@latest
+   ```
+4. **Implement** your logic (e.g. JSON storage, handlers), wire commands, then `go build` or `go run .`.
+
+This repository already has **`cobracli`**, **`cmd/task-cobra`**, **`cmd/task-stdlib`**, and **`internal/handlers`**; you would only repeat the “from scratch” flow to practice or to bootstrap a **different** repo. See the [Cobra user guide](https://github.com/spf13/cobra/blob/main/site/content/user_guide.md) for more detail.
+
+## Two ways to run the CLI
+
+This repository ships **two entrypoints** that share the same behavior (same subcommands and JSON storage):
+
+| Mode | Description | Build / run |
+|------|-------------|-------------|
+| **Standard library** | Parsing with `os.Args` only — **no Cobra** in this binary | `go run ./cmd/task-stdlib …` or `go build -o task-stdlib ./cmd/task-stdlib` |
+| **Cobra** | Subcommands and help via [Cobra](https://github.com/spf13/cobra) | `go run . …`, `go run ./cmd/task-cobra …`, or `go build -o task-cobra .` |
+
+Shared logic lives in **`internal/handlers`**. The default **`go run .`** and **`main.go`** at the repo root use the **Cobra** stack (`cobracli`).
+
+## Commands
+
+Run these after any of: `go run .`, `go run ./cmd/task-cobra`, or `go run ./cmd/task-stdlib` (replace the prefix with your built binary name if you use `go build`).
+
+| Action | Command |
+|--------|---------|
+| Add a task | `<binary> add "Description"` |
+| List all tasks | `<binary> list` |
+| List by status | `<binary> list` `done` \| `todo` \| `in-progress` |
+| Update description | `<binary> update <id> "New description"` |
+| Delete a task | `<binary> delete <id>` |
+| Mark in progress | `<binary> mark-in-progress <id>` |
+| Mark done | `<binary> mark-done <id>` |
+| Help (stdlib) | `<binary> help` or `<binary> -h` or `<binary> --help` |
+| Help (Cobra) | `<binary> --help` or `<binary> <command> --help` |
+
+### Examples
 
 ```bash
-# Adding a new task
-task-cli add "Buy groceries"
-# Output: Task added successfully (ID: 1)
+# From repo root — Cobra (default main)
+go run . add "Buy groceries"
+go run . list
+go run . list done
+go run . update 0 "Buy groceries and cook dinner"
+go run . mark-in-progress 0
+go run . mark-done 0
+go run . delete 0
 
-# Updating and deleting tasks
-task-cli update 1 "Buy groceries and cook dinner"
-task-cli delete 1
-
-# Marking a task as in progress or done
-task-cli mark-in-progress 1
-task-cli mark-done 1
-
-# Listing all tasks
-task-cli list
-
-# Listing tasks by status
-task-cli list done
-task-cli list todo
-task-cli list in-progress
-
+# Standard library only
+go run ./cmd/task-stdlib add "Buy groceries"
+go run ./cmd/task-stdlib list
 ```
 
-### Task Properties
-
-Each task should have the following properties:
-
-* `id`: A unique identifier for the task
-* `description`: A short description of the task
-* `status`: The status of the task (`todo`, `in-progress`, `done`)
-* `createdAt`: The date and time when the task was created
-* `updatedAt`: The date and time when the task was last updated
-
-Make sure to add these properties to the JSON file when adding a new task and update them when updating a task.
-
----
-
-## Getting Started
-
-Here are a few steps to help you get started with the Task Tracker CLI project:
-
-### Set Up Your Development Environment
-
-* Choose a programming language you are comfortable with (e.g., Python, JavaScript, etc.).
-* Ensure you have a code editor or IDE installed (e.g., VSCode, PyCharm).
-
-### Project Initialization
-
-* Create a new project directory for your Task Tracker CLI.
-* Initialize a version control system (e.g., Git) to manage your project.
-
-### Implementing Features
-
-* Start by creating a basic CLI structure to handle user inputs.
-* Implement each feature one by one, ensuring to test thoroughly before moving to the next e.g. implement adding task functionality first, listing next, then updating, marking as in progress, etc.
-
-### Testing and Debugging
-
-* Test each feature individually to ensure they work as expected. Look at the JSON file to verify that the tasks are being stored correctly.
-* Debug any issues that arise during development.
-
-### Finalizing the Project
-
-* Ensure all features are implemented and tested.
-* Clean up your code and add comments where necessary.
-* Write a good readme file on how to use your Task Tracker CLI.
-
----
-
-By the end of this project, you will have developed a practical tool that can help you or others manage tasks efficiently. This project lays a solid foundation for more advanced programming projects and real-world applications.
+Use a **quoted** description when it contains spaces. Task **IDs** start at **0** in this implementation (see `task_master.json`).
