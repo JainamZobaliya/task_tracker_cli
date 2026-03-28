@@ -1,7 +1,6 @@
 package main
-
-import "fmt"
+import "task_tracker_cli/cmd"
 
 func main() {
-	fmt.Println("Go Project initiated.")
+	cmd.Execute()
 }
